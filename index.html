@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quizify Admin Panel</title>
+    <link rel="stylesheet" href="admin.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <h1>Quizify Admin Panel</h1>
+
+        <!-- NEW: Main Admin Navigation -->
+        <div id="main-admin-nav" class="admin-nav" style="display: none;">
+            <div class="nav-links">
+                <a href="index.html" class="active">Video Management</a>
+                <a href="quiz-admin.html">Quiz Management</a>
+            </div>
+            <button id="logout-btn" class="admin-button">Logout</button>
+        </div>
+
+        <div id="auth-section" class="auth-section">
+            <h2>Admin Login</h2>
+            <input type="password" id="admin-password" placeholder="Enter Admin Password">
+            <button id="login-btn">Login</button>
+            <p id="auth-error" class="error-message"></p>
+        </div>
+
+        <!-- Filters Section -->
+        <div id="filters-section" class="filters-section" style="display: none;">
+            <div class="form-group">
+                <label for="video-category-dropdown">Category:</label>
+                <select id="video-category-dropdown">
+                    <option value="">Select Category</option>
+                    <option value="english">English</option>
+                    <option value="reasoning">Reasoning</option>
+                    <option value="quantitative">Quantitative</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="video-topic-dropdown">Topic:</label>
+                <select id="video-topic-dropdown">
+                    <option value="">Select Topic</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="video-folder-dropdown">Folder:</label>
+                <select id="video-folder-dropdown">
+                    <option value="">All Videos</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Folder Management Section -->
+        <div id="folder-section" class="folder-section" style="display: none;">
+            <h2>Video Folders</h2>
+            <button id="create-folder-btn" class="admin-button">Create New Folder</button>
+            <div id="folders-list" class="folders-list">
+                <!-- Folder cards will be loaded here -->
+            </div>
+        </div>
+
+        <div id="upload-section" class="upload-section" style="display: none;">
+            <div class="header">
+                <h2>Upload New Video</h2>
+            </div>
+
+            <form id="video-upload-form" novalidate>
+                <div class="form-group">
+                    <label for="video-title">Video Title:</label>
+                    <input type="text" id="video-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="video-description">Description:</label>
+                    <textarea id="video-description" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="video-url">Video URL:</label>
+                    <input type="url" id="video-url" placeholder="e.g., https://example.com/video.mp4 or YouTube URL" required>
+                </div>
+                <div class="form-group">
+                    <label for="thumbnail-file">Thumbnail Image (Optional):</label>
+                    <input type="file" id="thumbnail-file" accept="image/*">
+                </div>
+
+                <button type="submit" id="upload-btn" class="admin-button">Upload Video</button>
+            </form>
+
+            <div id="upload-progress-container" style="display: none;">
+                <p>Uploading: <span id="upload-percentage">0%</span></p>
+                <progress id="upload-progress" value="0" max="100"></progress>
+            </div>
+
+            <p id="upload-status" class="status-message"></p>
+        </div>
+
+        <!-- This section will now display the videos loaded by admin.js -->
+        <div id="video-list-section" style="display: none;">
+            <h2>Existing Videos</h2>
+            <div id="video-list">
+                <!-- Videos will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Folder Creation Modal -->
+    <div id="folder-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Folder</h2>
+                <button class="modal-close-btn" title="Close">&times;</button>
+            </div>
+            <form id="folder-form">
+                <div class="form-group">
+                    <label for="folder-name">Folder Name:</label>
+                    <input type="text" id="folder-name" required>
+                </div>
+                <button type="submit" class="admin-button">Create Folder</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Video Modal -->
+    <div id="edit-video-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Video Details</h2>
+                <button id="close-edit-modal-btn" class="modal-close-btn" title="Close">&times;</button>
+            </div>
+            <form id="video-edit-form" novalidate>
+                <input type="hidden" id="edit-video-id">
+                <div class="form-group">
+                    <label for="edit-video-title">Video Title:</label>
+                    <input type="text" id="edit-video-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-video-description">Description:</label>
+                    <textarea id="edit-video-description" rows="4"></textarea>
+                </div>
+                <button type="submit" id="save-changes-btn" class="admin-button">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- NEW: Delete Video Confirmation Modal -->
+    <div id="delete-video-confirm-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Confirm Deletion</h2>
+            <p>Are you sure you want to permanently delete this video? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button id="cancel-video-delete-btn" class="admin-button btn--secondary">Cancel</button>
+                <button id="confirm-video-delete-btn" class="admin-button btn--danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
