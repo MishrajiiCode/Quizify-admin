@@ -1,165 +1,120 @@
 /* admin.css */
 
-/* --- 1. Root Variables for Theming --- */
-:root {
-    --color-primary: #4a90e2; /* A modern, friendly blue */
-    --color-primary-dark: #357ABD;
-    --color-secondary: #50e3c2; /* A vibrant accent color */
-    --color-danger: #e74c3c;
-    --color-danger-dark: #c0392b;
-    --color-success: #2ecc71;
-    --color-warning: #f39c12;
-    --color-info: #3498db;
-
-    --color-text: #34495e;
-    --color-text-light: #7f8c8d;
-    --color-bg: #f8f9fa; /* Lighter background */
-    --color-surface: #ffffff; /* Cards, modals, etc. */
-    --color-border: #e0e6ed;
-
-    --font-family-sans: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.06);
-    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-    --border-radius: 8px;
-}
-
-/* --- 2. General Body & Typography Styles --- */
 body {
-    font-family: var(--font-family-sans);
-    background-color: var(--color-bg);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7f6;
     margin: 0;
-    padding: 2rem 1rem; /* Responsive padding */
+    padding: 20px;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     min-height: 100vh;
-    color: var(--color-text);
-    line-height: 1.6;
+    color: #333;
 }
 
-/* --- 3. Main Container & Headers --- */
 .admin-container {
-    background-color: var(--color-surface);
-    padding: 2.5rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-md);
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 1200px; /* Wider for larger screens */
+    max-width: 800px;
 }
 
 h1 {
     text-align: center;
-    color: var(--color-text);
-    margin-top: 0;
-    margin-bottom: 2rem;
-    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 30px;
 }
 
 h2 {
-    color: var(--color-text);
-    border-bottom: 1px solid var(--color-border);
+    color: #34495e;
+    border-bottom: 1px solid #eee;
     padding-bottom: 10px;
     margin-bottom: 20px;
+}
+
+/* NEW: Admin Navigation */
+.admin-nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 15px;
+}
+.admin-nav .nav-link {
+    padding: 10px 15px;
+    text-decoration: none;
+    color: #007bff;
+    border-radius: 5px;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+.admin-nav .nav-link:hover {
+    background-color: #f0f7ff;
 }
 
 .auth-section, .upload-section, .video-list-section {
     margin-bottom: 40px;
     padding: 20px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    background-color: var(--color-surface);
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    background-color: #fdfdfd;
 }
 
-/* --- 4. Buttons --- */
-.admin-button,
-button,
-input[type="submit"] {
-    display: inline-block;
-    font-weight: 600;
-    color: #fff;
-    text-align: center;
-    vertical-align: middle;
+.auth-section input[type="email"],
+.auth-section input[type="password"],
+.form-group input[type="text"],
+.form-group textarea,
+.form-group select {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.auth-section button,
+#upload-btn {
+    background-color: #28a745;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
     cursor: pointer;
-    user-select: none;
-    background-color: var(--color-primary);
-    border: 1px solid transparent;
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    line-height: 1.5;
-    border-radius: var(--border-radius);
-    transition: all 0.2s ease-in-out;
-    text-decoration: none;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    width: 100%;
 }
 
-button:hover,
-.admin-button:hover {
-    background-color: var(--color-primary-dark);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-sm);
-}
-
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-/* Button Variants */
-.btn--secondary {
-    background-color: var(--color-text-light);
-}
-.btn--secondary:hover {
-    background-color: var(--color-text);
-}
-
-.btn--danger {
-    background-color: var(--color-danger);
-}
-.btn--danger:hover {
-    background-color: var(--color-danger-dark);
-}
-
-/* --- 5. Navigation --- */
-.admin-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: var(--color-bg);
-    padding: 10px 20px;
-    border-radius: var(--border-radius);
-    margin-bottom: 30px;
-}
-.admin-nav .nav-links a {
-    color: var(--color-text-light);
-    text-decoration: none;
-    padding: 8px 15px;
-    border-radius: var(--border-radius);
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-.admin-nav .nav-links a:hover {
-    background-color: var(--color-border);
-    color: var(--color-text);
-}
-.admin-nav .nav-links a.active {
-    background-color: var(--color-primary);
-    color: #fff;
-    box-shadow: var(--shadow-sm);
+.auth-section button:hover,
+#upload-btn:hover {
+    background-color: #218838;
 }
 
 #logout-btn {
-    background-color: transparent;
-    color: var(--color-text-light);
+    background-color: #dc3545;
+    color: white;
     padding: 8px 15px;
     border: none;
-    font-weight: 600;
-}
-#logout-btn:hover {
-    background-color: var(--color-border);
-    color: var(--color-danger);
-    transform: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
 }
 
-/* --- 6. Forms & Inputs --- */
+#logout-btn:hover {
+    background-color: #c82333;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
 .form-group {
     margin-bottom: 15px;
 }
@@ -170,27 +125,6 @@ button:disabled {
     font-weight: bold;
 }
 
-.form-control,
-input[type="text"],
-input[type="password"],
-input[type="email"],
-input[type="url"],
-input[type="number"],
-textarea,
-select {
-    display: block;
-    width: 100%;
-    padding: 0.75rem;
-    font-size: 1rem;
-    font-family: var(--font-family-sans);
-    color: var(--color-text);
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-}
-
-/* --- 7. Status & Progress --- */
 #upload-progress-container {
     margin-top: 20px;
 }
@@ -203,22 +137,22 @@ select {
     border-radius: 5px;
 }
 
-#upload-progress::-webkit-progress-bar { background-color: var(--color-border); border-radius: 5px; }
-#upload-progress::-webkit-progress-value { background-color: var(--color-primary); border-radius: 5px; }
-#upload-progress::-moz-progress-bar { background-color: var(--color-primary); border-radius: 5px; }
+#upload-progress::-webkit-progress-bar { background-color: #e0e0e0; border-radius: 5px; }
+#upload-progress::-webkit-progress-value { background-color: #007bff; border-radius: 5px; }
+#upload-progress::-moz-progress-bar { background-color: #007bff; border-radius: 5px; }
 
 .status-message {
     margin-top: 15px;
     padding: 10px;
-    border-radius: var(--border-radius);
+    border-radius: 4px;
     font-weight: bold;
 }
 
-.status-message.success { background-color: #d4edda; color: #155724; }
-.status-message.error { background-color: #f8d7da; color: #721c24; }
+.status-message.success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+.status-message.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
 
 .error-message {
-    color: var(--color-danger);
+    color: #dc3545;
     margin-top: 10px;
     font-size: 14px;
 }
@@ -231,10 +165,10 @@ select {
 }
 
 .folder-section {
-    margin: 40px 0;
+    margin: 20px 0;
     padding: 20px;
-    background: var(--color-bg);
-    border-radius: var(--border-radius);
+    background: #f5f5f5;
+    border-radius: 8px;
 }
 
 .folders-grid {
@@ -247,15 +181,14 @@ select {
 .folder-card {
     background: white;
     padding: 15px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-sm);
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     cursor: pointer;
     transition: transform 0.2s ease;
 }
 
 .folder-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
 }
 
 .folder-name {
@@ -264,7 +197,7 @@ select {
 }
 
 .folder-info {
-    color: var(--color-text-light);
+    color: #666;
     font-size: 0.9em;
 }
 
@@ -287,9 +220,9 @@ select {
 
 .video-item {
     border: 1px solid #ddd;
-    border-radius: var(--border-radius);
+    border-radius: 8px;
     overflow: hidden;
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
 .video-item img {
@@ -306,12 +239,12 @@ select {
 .video-item-info h3 {
     margin-top: 0;
     font-size: 18px;
-    color: var(--color-text);
+    color: #333;
 }
 
 .video-item-info p {
     font-size: 14px;
-    color: var(--color-text-light);
+    color: #666;
 }
 
 .video-item-actions {
@@ -328,13 +261,13 @@ select {
 }
 
 .edit-btn {
-    background-color: var(--color-primary);
+    background-color: #007bff;
 }
 .edit-btn:hover {
-    background-color: var(--color-primary-dark);
+    background-color: #0056b3;
 }
 
-/* --- 8. Modals --- */
+/* Edit Video Modal */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -354,10 +287,10 @@ select {
     background-color: #fff;
     padding: 20px;
     display: flex; /* NEW: Use flexbox for better layout */
-    flex-direction: column;
+    flex-direction: column; /* NEW: Stack children vertically */
     max-height: 90vh; /* NEW: Limit the modal's height */
-    border-radius: var(--border-radius);
-    max-width: 600px;
+    border-radius: 8px;
+    max-width: 500px;
     width: 90%;
 }
 .modal-close-btn {
@@ -371,9 +304,16 @@ select {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid #eee;
     padding-bottom: 10px;
     margin-bottom: 20px;
+}
+
+#save-changes-btn {
+    background-color: #007bff;
+}
+#save-changes-btn:hover {
+    background-color: #0056b3;
 }
 
 .modal-body {
@@ -385,11 +325,12 @@ select {
 .modal-footer {
     padding-top: 20px;
     margin-top: 20px;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid #eee;
     flex-shrink: 0; /* NEW: Prevent footer from shrinking */
 }
 
-/* --- 9. Quiz Admin Specific Styles --- */
+
+/* NEW: Quiz Admin Specific Styles */
 .quiz-navigation {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -397,11 +338,20 @@ select {
     margin-bottom: 20px;
 }
 
+.form-control { /* Generic class for inputs/selects */
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
 #question-editor-container {
     margin-top: 20px;
 }
 
 #editor-heading {
+    font-size: 1.2rem;
     color: #2c3e50;
     margin-bottom: 15px;
 }
@@ -419,10 +369,10 @@ select {
 }
 
 .set-block {
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
+    border: 1px solid #ccc;
+    border-radius: 8px;
     padding: 15px;
-    background-color: var(--color-surface);
+    background-color: #fdfdfd;
 }
 
 .set-header {
@@ -430,7 +380,8 @@ select {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
-    padding-bottom: 10px;    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
 }
 
 .set-header h4 {
@@ -441,12 +392,12 @@ select {
 
 .question-item {
     padding: 10px;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid #f0f0f0;
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
 .question-item:hover {
-    background-color: var(--color-bg);
+    background-color: #f4f7f6;
 }
 .question-item:last-child {
     border-bottom: none;
@@ -458,29 +409,15 @@ select {
     padding: 10px 20px;
 }
 
+
+.btn--danger {
+    background-color: #dc3545;
+}
+.btn--danger:hover {
+    background-color: #c82333;
+}
+
 .add-new-option {
     font-style: italic;
     color: var(--color-primary);
-}
-
-/* --- 10. Responsive Adjustments --- */
-@media (max-width: 768px) {
-    body {
-        padding: 1rem 0.5rem;
-    }
-    .admin-container {
-        padding: 1.5rem;
-    }
-    h1 {
-        font-size: 1.8rem;
-    }
-    .admin-nav {
-        flex-direction: column;
-        gap: 10px;
-    }
-    .admin-nav .nav-links {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
 }
