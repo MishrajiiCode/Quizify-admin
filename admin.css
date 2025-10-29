@@ -34,26 +34,6 @@ h2 {
     margin-bottom: 20px;
 }
 
-/* NEW: Admin Navigation */
-.admin-nav {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 30px;
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 15px;
-}
-.admin-nav .nav-link {
-    padding: 10px 15px;
-    text-decoration: none;
-    color: #007bff;
-    border-radius: 5px;
-    font-weight: 500;
-    transition: background-color 0.2s ease;
-}
-.admin-nav .nav-link:hover {
-    background-color: #f0f7ff;
-}
-
 .auth-section, .upload-section, .video-list-section {
     margin-bottom: 40px;
     padding: 20px;
