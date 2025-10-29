@@ -15,14 +15,10 @@
     <div class="admin-container">
         <h1>Quizify Admin Panel</h1>
 
-        <!-- NEW: Main Admin Navigation -->
-        <div id="main-admin-nav" class="admin-nav" style="display: none;">
-            <div class="nav-links">
-                <a href="index.html" class="active">Video Management</a>
-                <a href="quiz-admin.html">Quiz Management</a>
-            </div>
-            <button id="logout-btn" class="admin-button">Logout</button>
-        </div>
+        <nav class="admin-nav">
+            <a href="index.html" class="nav-link active">Video Management</a>
+            <a href="quiz-admin - Copy.html" class="nav-link">Quiz Management</a>
+        </nav>
 
         <div id="auth-section" class="auth-section">
             <h2>Admin Login</h2>
@@ -59,7 +55,7 @@
         <!-- Folder Management Section -->
         <div id="folder-section" class="folder-section" style="display: none;">
             <h2>Video Folders</h2>
-            <button id="create-folder-btn" class="admin-button">Create New Folder</button>
+            <button id="create-folder-btn">Create New Folder</button>
             <div id="folders-list" class="folders-list">
                 <!-- Folder cards will be loaded here -->
             </div>
@@ -68,6 +64,7 @@
         <div id="upload-section" class="upload-section" style="display: none;">
             <div class="header">
                 <h2>Upload New Video</h2>
+                <button id="logout-btn">Logout</button>
             </div>
 
             <form id="video-upload-form" novalidate>
@@ -88,7 +85,7 @@
                     <input type="file" id="thumbnail-file" accept="image/*">
                 </div>
 
-                <button type="submit" id="upload-btn" class="admin-button">Upload Video</button>
+                <button type="submit" id="upload-btn">Upload Video</button>
             </form>
 
             <div id="upload-progress-container" style="display: none;">
@@ -120,7 +117,7 @@
                     <label for="folder-name">Folder Name:</label>
                     <input type="text" id="folder-name" required>
                 </div>
-                <button type="submit" class="admin-button">Create Folder</button>
+                <button type="submit">Create Folder</button>
             </form>
         </div>
     </div>
@@ -142,7 +139,7 @@
                     <label for="edit-video-description">Description:</label>
                     <textarea id="edit-video-description" rows="4"></textarea>
                 </div>
-                <button type="submit" id="save-changes-btn" class="admin-button">Save Changes</button>
+                <button type="submit" id="save-changes-btn">Save Changes</button>
             </form>
         </div>
     </div>
@@ -153,8 +150,8 @@
             <h2>Confirm Deletion</h2>
             <p>Are you sure you want to permanently delete this video? This action cannot be undone.</p>
             <div class="modal-actions">
-                <button id="cancel-video-delete-btn" class="admin-button btn--secondary">Cancel</button>
-                <button id="confirm-video-delete-btn" class="admin-button btn--danger">Delete</button>
+                <button id="cancel-video-delete-btn" class="btn--secondary">Cancel</button>
+                <button id="confirm-video-delete-btn" class="btn--danger">Delete</button>
             </div>
         </div>
     </div>
