@@ -81,8 +81,8 @@ const QuizAdmin = {
         this.chapterSelect.addEventListener('change', () => this.handleChapterChange());
         this.setSelect.addEventListener('change', () => this.loadQuestions());
         this.addQuestionBtn.addEventListener('click', () => this.openQuestionModal());
-        this.addSetBtn.addEventListener('click', () => this.addSet());
-        this.deleteSetBtn.addEventListener('click', () => this.deleteSet());
+        this.addSetBtn.addEventListener('click', async () => await this.addSet());
+        this.deleteSetBtn.addEventListener('click', async () => await this.deleteSet());
 
         // Modal listeners
         this.closeQuestionModalBtn.addEventListener('click', () => this.closeQuestionModal());
@@ -92,7 +92,7 @@ const QuizAdmin = {
         this.questionForm.addEventListener('submit', async (e) => await this.handleSaveQuestion(e));
     },
 
-    handleLogin() { // This function doesn't need to be async
+    handleLogin() {
         if (this.passwordInput.value === this.ADMIN_PASSWORD) {
             sessionStorage.setItem('isAdminLoggedIn', 'true');
             this.showAdminPanel();
@@ -106,10 +106,9 @@ const QuizAdmin = {
         this.showLoginPanel();
     },
 
-    async showAdminPanel() { // Made async because it calls an async function
+    showAdminPanel() {
         this.authSection.style.display = 'none';
         this.adminPanel.style.display = 'block';
-        document.getElementById('main-admin-nav').style.display = 'flex';
         this.loadSubjects();
     },
 
@@ -117,7 +116,6 @@ const QuizAdmin = {
         this.authSection.style.display = 'block';
         this.adminPanel.style.display = 'none';
         this.passwordInput.value = '';
-        document.getElementById('main-admin-nav').style.display = 'none';
     },
 
     async loadSubjects() {
@@ -125,27 +123,39 @@ const QuizAdmin = {
         const category = this.categorySelect.value;
 
         try {
-            const snapshot = await quizzesCollection.where('category', '==', category).get();
-            this.allSubjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            let subjects = [];
+            if (category === 'competitive') {
+                // Fetch both 'competitive' and 'general_science' subjects
+                const competitivePromise = quizzesCollection.where('category', '==', 'competitive').get();
+                const generalSciencePromise = quizzesCollection.where('category', '==', 'general_science').get();
+                const [competitiveSnapshot, generalScienceSnapshot] = await Promise.all([competitivePromise, generalSciencePromise]);
+                
+                competitiveSnapshot.forEach(doc => subjects.push({ id: doc.id, ...doc.data() }));
+                generalScienceSnapshot.forEach(doc => subjects.push({ id: doc.id, ...doc.data() }));
+            } else {
+                const snapshot = await quizzesCollection.where('category', '==', category).get();
+                snapshot.forEach(doc => subjects.push({ id: doc.id, ...doc.data() }));
+            }
+            this.allSubjects = subjects;
 
             this.subjectSelect.innerHTML = '<option value="">-- Select a Subject --</option>';
             this.allSubjects.forEach(subject => {
                 const option = document.createElement('option');
                 option.value = subject.id;
-                // FIX: Create a more descriptive name for academic subjects
+                // If it's an academic subject, prepend the class number for clarity
                 if (subject.category === 'academic' && subject.class) {
                     option.textContent = `Class ${subject.class} - ${subject.subjectName}`;
                 } else {
                     option.textContent = subject.subjectName;
                 }
                 this.subjectSelect.appendChild(option);
-            }); // FIX: The forEach loop was not closed correctly.
-
+            });
             this.chapterSelect.innerHTML = '';
             this.setSelect.innerHTML = '';
             this.questionList.innerHTML = '';
             this.editorHeading.textContent = 'Please select a subject and chapter to begin.';
             this.setActions.style.display = 'none';
+            this.showStatus('');
         } catch (error) {
             this.showStatus('Failed to load subjects.', 'error');
             console.error("Error loading subjects:", error);
@@ -164,7 +174,7 @@ const QuizAdmin = {
             return;
         }
         const selectedSubject = this.allSubjects.find(s => s.id === this.currentSubjectId);
-        this.chapterSelect.innerHTML = '<option value="">-- Select a Chapter --</option>'; // FIX: Added missing semicolon
+        this.chapterSelect.innerHTML = '<option value="">-- Select a Chapter --</option>';
         selectedSubject.chapters.forEach((chapter, index) => {
             const option = document.createElement('option');
             option.value = index;
@@ -173,7 +183,7 @@ const QuizAdmin = {
         });
     },
 
-    handleChapterChange() { // This function doesn't need to be async itself
+    async handleChapterChange() {
         this.currentChapterIndex = parseInt(this.chapterSelect.value, 10);
         if (isNaN(this.currentChapterIndex)) {
             this.setSelect.innerHTML = '';
@@ -181,11 +191,11 @@ const QuizAdmin = {
             this.setActions.style.display = 'none';
             return;
         }
-        this.populateSetSelector();
-        this.loadQuestions(); // Load questions for the first set by default
+        await this.populateSetSelector();
+        await this.loadQuestions(); // Load questions for the first set by default
     },
 
-    loadQuestions() { // This function doesn't need to be async
+    async loadQuestions() {
         const setIndex = parseInt(this.setSelect.value, 10);
 
         if (!this.currentSubjectId || isNaN(this.currentChapterIndex) || isNaN(setIndex)) {
@@ -194,16 +204,30 @@ const QuizAdmin = {
             return;
         }
 
-        const subjectData = this.allSubjects.find(s => s.id === this.currentSubjectId);
-        if (!subjectData) {
-            this.showStatus('Subject not found', 'warning');
-            return;
+        try {
+            this.showStatus('Loading questions...', 'info');            
+            const subjectData = this.allSubjects.find(s => s.id === this.currentSubjectId);
+            if (!subjectData) {
+                this.showStatus('Subject not found', 'warning');
+                return;
+            }
+            const chapter = subjectData.chapters[this.currentChapterIndex];
+
+            if (!chapter || !chapter.sets || !chapter.sets[setIndex]) {
+                this.showStatus('Chapter not found', 'warning');
+                this.questionList.innerHTML = '<p>This set does not exist.</p>';
+                return;
+            }
+
+            const questions = chapter.sets[setIndex].questions || [];
+            this.displayQuestions(questions, setIndex);
+            this.editorHeading.textContent = `Editing: ${subjectData.subjectName} > ${chapter.name} > Set ${setIndex + 1}`;
+            this.showStatus(`Loaded ${questions.length} questions`, 'success');
+
+        } catch (error) {
+            console.error('Error loading questions:', error);
+            this.showStatus('Failed to load questions', 'error');
         }
-        const chapter = subjectData.chapters[this.currentChapterIndex];
-        const questions = chapter?.sets?.[setIndex]?.questions || [];
-        this.displayQuestions(questions, setIndex);
-        this.editorHeading.textContent = `Editing: ${subjectData.subjectName} > ${chapter.name} > Set ${setIndex + 1}`;
-        this.showStatus(`Loaded ${questions.length} questions`, 'success');
     },
 
     displayQuestions(questions, setIndex) {
@@ -266,7 +290,6 @@ const QuizAdmin = {
 
     async handleSaveQuestion(event) {
         event.preventDefault();
-        this.showLoading();
         this.showStatus('Saving...', 'info');
 
         const setIndex = parseInt(this.questionSetIndexInput.value, 10);
@@ -288,9 +311,8 @@ const QuizAdmin = {
         const chapter = subject.chapters[this.currentChapterIndex];
 
         // FIX: Ensure the set and its questions array exist before trying to add to them.
-        // This prevents errors when adding the first question to a new set.
         if (!chapter.sets[setIndex]) {
-            chapter.sets[setIndex] = { questions: [] }; // This was step 1, but I've renumbered for clarity
+            chapter.sets[setIndex] = { questions: [] };
         }
 
         if (questionIndex > -1) { // Editing
@@ -298,7 +320,7 @@ const QuizAdmin = {
         } else { // Adding
             if (!chapter.sets[setIndex].questions) {
                 chapter.sets[setIndex].questions = [];
-            } // This was step 1, but I've renumbered for clarity
+            }
             chapter.sets[setIndex].questions.push(questionData);
         }
 
@@ -306,19 +328,16 @@ const QuizAdmin = {
             await quizzesCollection.doc(this.currentSubjectId).update({ chapters: subject.chapters });
             this.showStatus('Question saved successfully!', 'success');
             this.closeQuestionModal();
-            await this.refreshCurrentView();
+            await this.refreshSubjectData(); // Refresh local data
+            await this.loadQuestions();
         } catch (error) {
             console.error("Error saving question:", error);
             this.showStatus('Failed to save question.', 'error');
-        } finally {
-            this.hideLoading();
         }
     },
 
     async handleDeleteQuestion(setIndex, questionIndex) {
         if (!confirm('Are you sure you want to delete this question?')) return;
-
-        this.showLoading();
 
         const subject = this.allSubjects.find(s => s.id === this.currentSubjectId);
         const chapter = subject.chapters[this.currentChapterIndex];
@@ -327,25 +346,21 @@ const QuizAdmin = {
         try {
             await quizzesCollection.doc(this.currentSubjectId).update({ chapters: subject.chapters });
             this.showStatus('Question deleted successfully', 'success');
-            await this.refreshCurrentView();
+            await this.refreshSubjectData();
+            await this.loadQuestions();
         } catch (error) {
             console.error('Error deleting question:', error);
             this.showStatus('Failed to delete question', 'error');
-        } finally {
-            this.hideLoading();
         }
-
     },
 
-    async deleteSet() { // Made async
-        const setIndex = parseInt(this.setSelect.value, 10); // This is correct
+    async deleteSet() {
+        const setIndex = parseInt(this.setSelect.value, 10);
         if (isNaN(setIndex)) {
             this.showStatus('Please select a set to delete.', 'error');
             return;
         }
         if (!confirm(`Are you sure you want to delete Set ${setIndex + 1}? This action cannot be undone.`)) return;
-
-        this.showLoading();
 
         const subject = this.allSubjects.find(s => s.id === this.currentSubjectId);
         const chapter = subject.chapters[this.currentChapterIndex];
@@ -355,106 +370,69 @@ const QuizAdmin = {
         try {
             await quizzesCollection.doc(this.currentSubjectId).update({ chapters: subject.chapters });
             this.showStatus('Set deleted successfully!', 'success');
-            await this.refreshSubjectData(); // Full refresh needed here
-            this.handleChapterChange(); // Refresh the UI
+            await this.refreshSubjectData();
+            await this.handleChapterChange(); // Refresh the UI
         } catch (error) {
             console.error("Error deleting set:", error);
             this.showStatus('Failed to delete set.', 'error');
-        } finally {
-            this.hideLoading();
         }
     },
 
-    // Add this function to populate sets
-    populateSetSelector() { // This function doesn't need to be async
+    async populateSetSelector() {
         if (isNaN(this.currentChapterIndex)) {
             this.setSelect.innerHTML = '';
             this.setActions.style.display = 'none';
             return;
         }
 
-        const subject = this.allSubjects.find(s => s.id === this.currentSubjectId);
-        const chapter = subject.chapters[this.currentChapterIndex];
-        const sets = chapter.sets || [];
-
-        this.setSelect.innerHTML = '';
-        sets.forEach((_, index) => {
-            const option = document.createElement('option');
-            option.value = index;
-            option.textContent = `Set ${index + 1}`;
-            this.setSelect.appendChild(option);
-        });
-
-        this.setActions.style.display = 'block';
+        try {
+            const subject = this.allSubjects.find(s => s.id === this.currentSubjectId);
+            const chapter = subject.chapters[this.currentChapterIndex];
+            const sets = chapter.sets || [];
+            
+            this.setSelect.innerHTML = '';
+            sets.forEach((_, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `Set ${index + 1}`;
+                this.setSelect.appendChild(option);
+            });
+            
+            this.setActions.style.display = 'block';
+        } catch (error) {
+            console.error('Error loading sets:', error);
+            this.showStatus('Failed to load sets', 'error');
+        }
     },
 
-    // Add this function to create a new set
     async addSet() {
         if (!this.currentSubjectId || isNaN(this.currentChapterIndex)) {
             this.showStatus('Please select a subject and chapter first', 'error');
             return;
         }
 
-        this.showLoading();
-
-        const subject = this.allSubjects.find(s => s.id === this.currentSubjectId);
-        const chapter = subject.chapters[this.currentChapterIndex];
-        chapter.sets.push({ questions: [] }); // Add a new empty set
-
         try {
-            await quizzesCollection.doc(this.currentSubjectId).update({
-                chapters: subject.chapters
-            });
-            this.showStatus('New set added successfully!', 'success');
+            const subject = this.allSubjects.find(s => s.id === this.currentSubjectId);
+            const chapter = subject.chapters[this.currentChapterIndex];
+            chapter.sets.push({ questions: [] }); // Add a new empty set
 
-            await this.refreshSubjectData(); // Full refresh needed
-            this.handleSubjectChange(); // Re-populate chapters to reflect changes
-            this.chapterSelect.value = this.currentChapterIndex; // Re-select current chapter
-            this.handleChapterChange(); // Re-populate sets
-        } catch (error) { // This was correct
+            await quizzesCollection.doc(this.currentSubjectId).update({ chapters: subject.chapters });
+            this.showStatus('New set added successfully', 'success');
+            
+            await this.refreshSubjectData();
+            const newSetIndex = chapter.sets.length - 1;
+            await this.populateSetSelector();
+            this.setSelect.value = newSetIndex;
+            await this.loadQuestions();
+
+        } catch (error) {
             console.error('Error adding new set:', error);
             this.showStatus('Failed to add new set', 'error');
-        } finally {
-            this.hideLoading();
         }
     },
 
-    /**
-     * NEW: Refreshes the local `allSubjects` data from Firestore.
-     * This is crucial for updating the UI after any change.
-     */
     async refreshSubjectData() {
-        // Re-fetch data for the current category
-        const category = this.categorySelect.value;
-        const snapshot = await quizzesCollection.where('category', '==', category).get();
-        this.allSubjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    },
-    
-    /**
-     * NEW: Refreshes the current question list from Firestore without reloading the whole page.
-     */
-    async refreshCurrentView() {
-        await this.refreshSubjectData();
-        this.loadQuestions();
-    },
-
-    /**
-     * NEW: Shows a loading spinner over the question list.
-     */
-    showLoading() {
-        const overlay = document.createElement('div');
-        overlay.className = 'loading-overlay';
-        overlay.innerHTML = `<div class="spinner"></div>`;
-        this.questionList.style.position = 'relative';
-        this.questionList.appendChild(overlay);
-    },
-
-    /**
-     * NEW: Hides the loading spinner.
-     */
-    hideLoading() {
-        const overlay = this.questionList.querySelector('.loading-overlay');
-        if (overlay) overlay.remove();
+        await this.loadSubjects();
     },
 
     showStatus(message, type = 'info') {
@@ -476,18 +454,13 @@ const QuizAdmin = {
 
 QuizAdmin.init();
 
-// This is a one-time migration script.
-// You can run this from the browser console by typing `uploadAllDataToFirestore()`
 async function uploadAllDataToFirestore() {
-    // NEW: Helper function to get subject title, making this script self-contained.
     const getSubjectTitle = (subject) => {
         const titles = { quantitative: 'Quantitative Aptitude', english: 'English', reasoning: 'Reasoning', math: 'Mathematics', physics: 'Physics', chemistry: 'Chemistry', biology: 'Biology', accounts: 'Accounts', business: 'Business Studies', economics: 'Economics', history: 'History' };
         return titles[subject] || subject.charAt(0).toUpperCase() + subject.slice(1);
     };
 
-
     const quizzesCollection = db.collection("quizzes");
-
     console.log("Starting data upload...");
 
     // --- Competitive Data ---
@@ -504,9 +477,12 @@ async function uploadAllDataToFirestore() {
             const docData = {
                 subjectName: subjectId.charAt(0).toUpperCase() + subjectId.slice(1),
                 category: 'competitive',
-                    chapters: subject.chapters.map(chapter => ({ // This was correct
+                chapters: subject.chapters.map(chapter => ({
                     ...chapter,
-                    sets: chapter.sets.map(set => ({ questions: set }))
+                    // FIX: Check if a set is an array (old format) or an object (new format)
+                    sets: chapter.sets.map(set => 
+                        Array.isArray(set) ? { questions: set } : set
+                    )
                 }))
             };
             await quizzesCollection.doc(subjectId).set(docData);
@@ -514,9 +490,32 @@ async function uploadAllDataToFirestore() {
         }
     }
 
+    // --- General Science Data ---
+    const getGeneralScienceData = () => window.generalScienceData;
+    const generalScienceData = getGeneralScienceData();
+    if (generalScienceData) {
+        for (const subjectKey in generalScienceData) {
+            const subjectData = generalScienceData[subjectKey];
+            if (subjectData && subjectData.chapters) {
+                const docId = subjectKey;
+                console.log(`Processing General Science subject: ${docId}`);
+                
+                const docData = {
+                    subjectName: subjectData.subjectName,
+                    category: 'general_science',
+                    chapters: subjectData.chapters.map(chapter => ({
+                        ...chapter,
+                        sets: chapter.sets.map(set => ({ questions: set || [] }))
+                    }))
+                };
+                await quizzesCollection.doc(docId).set(docData);
+                console.log(`  -> Uploaded ${docId}`);
+            }
+        }
+    }
+
     // --- Academic Data ---
     const academicData = window.classesData;
-
     try {
         if (academicData) {
             for (const classNum in academicData) {
@@ -533,17 +532,17 @@ async function uploadAllDataToFirestore() {
                         category: 'academic',
                         class: classNum,
                         chapters: subjectChapters.map(chapter => ({
-                            ...chapter, // This was correct
-                            // Ensure sets are in the format { questions: [...] }
-                            sets: chapter.sets.map(set => ({ questions: set }))
+                            ...chapter, // FIX: Check if a set is an array or an object
+                            sets: chapter.sets.map(set => 
+                                Array.isArray(set) ? { questions: set } : set
+                            )
                         }))
                     };
 
-                    // FIX: Correctly add the 'streams' array if it exists for the class.
                     if (classInfo.streams) {
                         docData.streams = Object.keys(classInfo.streams).filter(stream => classInfo.streams[stream].includes(subjectKey));
                     } else {
-                        docData.streams = []; // Ensure the field exists even for classes 9/10
+                        docData.streams = [];
                     }
     
                     await quizzesCollection.doc(subjectId).set(docData);
