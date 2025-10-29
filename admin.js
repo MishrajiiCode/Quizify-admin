@@ -58,7 +58,6 @@ const uploadPercentage = document.getElementById('upload-percentage');
 const uploadProgressBar = document.getElementById('upload-progress');
 const uploadStatus = document.getElementById('upload-status');
 const videoListDiv = document.getElementById('video-list');
-const mainAdminNav = document.getElementById('main-admin-nav'); // NEW: Main nav bar
 
 // NEW: Edit Modal UI Elements
 const editModal = document.getElementById('edit-video-modal');
@@ -90,7 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function showAdminPanel() {
     authSection.style.display = 'none';
-    mainAdminNav.style.display = 'flex'; // NEW: Show the nav bar
     uploadSection.style.display = 'block';
     filtersSection.style.display = 'block';
     folderSection.style.display = 'block';
@@ -266,7 +264,6 @@ async function deleteFolder(folderId) {
 
 function showLoginPanel() {
     authSection.style.display = 'block';
-    mainAdminNav.style.display = 'none'; // NEW: Hide the nav bar
     uploadSection.style.display = 'none';
     videoListSection.style.display = 'none';
     authError.textContent = '';
