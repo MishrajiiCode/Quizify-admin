@@ -13,12 +13,6 @@
     <div class="admin-container">
         <h1>Quiz Content Management</h1>
 
-        <div class="admin-nav">
-            <a href="index.html">Dashboard</a> |
-            <a href="admin.html">Video Admin</a> |
-            <strong>Quiz Admin</strong>
-        </div>
-
         <!-- Login Section -->
         <div id="auth-section" class="auth-section">
             <h2>Admin Login</h2>
@@ -92,6 +86,10 @@
                     <div class="form-group">
                         <label for="question-text-input">Question:</label>
                         <textarea id="question-text-input" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="question-image-url-input">Image URL (Optional):</label>
+                        <input type="url" id="question-image-url-input" placeholder="https://example.com/image.png">
                     </div>
                     <div class="form-group">
                         <label>Options:</label>
