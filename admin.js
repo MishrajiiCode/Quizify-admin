@@ -25,21 +25,6 @@ const thumbnailStorageRef = storage.ref("thumbnails"); // Folder for thumbnail f
 const authSection = document.getElementById('auth-section');
 const uploadSection = document.getElementById('upload-section');
 const videoListSection = document.getElementById('video-list-section');
-const filtersSection = document.getElementById('filters-section');
-const folderSection = document.getElementById('folder-section');
-
-// Folder Management Elements
-const categoryDropdown = document.getElementById('video-category-dropdown');
-const topicDropdown = document.getElementById('video-topic-dropdown');
-const folderDropdown = document.getElementById('video-folder-dropdown');
-const createFolderBtn = document.getElementById('create-folder-btn');
-const foldersList = document.getElementById('folders-list');
-const folderModal = document.getElementById('folder-modal');
-const folderForm = document.getElementById('folder-form');
-const folderNameInput = document.getElementById('folder-name');
-
-// Initialize collections
-const foldersCollection = db.collection("videoFolders");
 
 // const adminEmailInput = document.getElementById('admin-email'); // Removed
 const adminPasswordInput = document.getElementById('admin-password');
@@ -50,8 +35,10 @@ const authError = document.getElementById('auth-error');
 const videoUploadForm = document.getElementById('video-upload-form');
 const videoTitleInput = document.getElementById('video-title');
 const videoDescriptionInput = document.getElementById('video-description');
+const videoCategoryInput = document.getElementById('video-category'); // NEW
+const videoTopicInput = document.getElementById('video-topic'); // NEW
 const videoUrlInput = document.getElementById('video-url'); // Changed from videoFileInput
-const thumbnailFileInput = document.getElementById('thumbnail-file');
+const thumbnailUrlInput = document.getElementById('thumbnail-url'); // Changed from thumbnailFileInput
 const uploadBtn = document.getElementById('upload-btn');
 const uploadProgressContainer = document.getElementById('upload-progress-container');
 const uploadPercentage = document.getElementById('upload-percentage');
@@ -90,176 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
 function showAdminPanel() {
     authSection.style.display = 'none';
     uploadSection.style.display = 'block';
-    filtersSection.style.display = 'block';
-    folderSection.style.display = 'block';
     videoListSection.style.display = 'block';
-    initializeFolderManagement();
     loadVideos();
-}
-
-// Topic mapping for each category
-const topicsByCategory = {
-    english: ['Noun', 'Verb', 'Adjective', 'Adverb', 'Preposition'],
-    reasoning: ['Logical', 'Verbal', 'Non-verbal', 'Data Interpretation'],
-    quantitative: ['Arithmetic', 'Algebra', 'Geometry', 'Data Analysis']
-};
-
-function initializeFolderManagement() {
-    // Category change handler
-    categoryDropdown.addEventListener('change', () => {
-        const category = categoryDropdown.value;
-        populateTopics(category);
-        loadFolders();
-    });
-
-    // Topic change handler
-    topicDropdown.addEventListener('change', () => {
-        loadFolders();
-    });
-
-    // Folder dropdown change handler
-    folderDropdown.addEventListener('change', () => {
-        loadVideos();
-    });
-
-    // Create folder button handler
-    createFolderBtn.addEventListener('click', () => {
-        if (!categoryDropdown.value || !topicDropdown.value) {
-            showUploadStatus('Please select a category and topic first', 'error');
-            return;
-        }
-        folderModal.classList.add('visible');
-    });
-
-    // Folder form submission handler
-    folderForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await createFolder();
-    });
-
-    // Close folder modal handler
-    document.querySelector('#folder-modal .modal-close-btn').addEventListener('click', () => {
-        folderModal.classList.remove('visible');
-    });
-}
-
-function populateTopics(category) {
-    const topics = topicsByCategory[category] || [];
-    topicDropdown.innerHTML = '<option value="">Select Topic</option>' +
-        topics.map(topic => `<option value="${topic.toLowerCase()}">${topic}</option>`).join('');
-}
-
-async function loadFolders() {
-    const category = categoryDropdown.value;
-    const topic = topicDropdown.value;
-
-    if (!category || !topic) {
-        foldersList.innerHTML = '<p>Select a category and topic to view folders</p>';
-        folderDropdown.innerHTML = '<option value="">All Videos</option>';
-        return;
-    }
-
-    try {
-        const snapshot = await foldersCollection
-            .where('category', '==', category)
-            .where('topic', '==', topic)
-            .orderBy('createdAt', 'desc')
-            .get();
-
-        // Update folders grid
-        foldersList.innerHTML = '';
-        folderDropdown.innerHTML = '<option value="">All Videos</option>';
-
-        if (snapshot.empty) {
-            foldersList.innerHTML = '<p>No folders created yet</p>';
-            return;
-        }
-
-        snapshot.forEach(doc => {
-            const folder = doc.data();
-            const folderCard = createFolderCard(doc.id, folder);
-            foldersList.appendChild(folderCard);
-
-            // Add to dropdown
-            const option = document.createElement('option');
-            option.value = doc.id;
-            option.textContent = folder.name;
-            folderDropdown.appendChild(option);
-        });
-    } catch (error) {
-        console.error('Error loading folders:', error);
-        showUploadStatus('Failed to load folders', 'error');
-    }
-}
-
-function createFolderCard(folderId, folder) {
-    const card = document.createElement('div');
-    card.className = 'folder-card';
-    card.innerHTML = `
-        <div class="folder-name">${folder.name}</div>
-        <div class="folder-info">Videos: ${folder.videos ? folder.videos.length : 0}</div>
-        <div class="video-item-actions">
-            <button class="edit-btn" onclick="renameFolder('${folderId}', '${folder.name}')">Rename</button>
-            <button class="btn--danger" onclick="deleteFolder('${folderId}')">Delete</button>
-        </div>
-    `;
-    return card;
-}
-
-async function createFolder() {
-    const name = folderNameInput.value.trim();
-    const category = categoryDropdown.value;
-    const topic = topicDropdown.value;
-
-    if (!name || !category || !topic) {
-        showUploadStatus('Please fill in all fields', 'error');
-        return;
-    }
-
-    try {
-        await foldersCollection.add({
-            name,
-            category,
-            topic,
-            videos: [],
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        folderModal.classList.remove('visible');
-        folderForm.reset();
-        showUploadStatus('Folder created successfully!', 'success');
-        loadFolders();
-    } catch (error) {
-        console.error('Error creating folder:', error);
-        showUploadStatus('Failed to create folder', 'error');
-    }
-}
-
-async function renameFolder(folderId, currentName) {
-    const newName = prompt('Enter new folder name:', currentName);
-    if (!newName || newName === currentName) return;
-
-    try {
-        await foldersCollection.doc(folderId).update({ name: newName });
-        showUploadStatus('Folder renamed successfully!', 'success');
-        loadFolders();
-    } catch (error) {
-        console.error('Error renaming folder:', error);
-        showUploadStatus('Failed to rename folder', 'error');
-    }
-}
-
-async function deleteFolder(folderId) {
-    if (!confirm('Are you sure you want to delete this folder? The videos will not be deleted.')) return;
-
-    try {
-        await foldersCollection.doc(folderId).delete();
-        showUploadStatus('Folder deleted successfully!', 'success');
-        loadFolders();
-    } catch (error) {
-        console.error('Error deleting folder:', error);
-        showUploadStatus('Failed to delete folder', 'error');
-    }
 }
 
 function showLoginPanel() {
@@ -298,11 +117,14 @@ videoUploadForm.addEventListener('submit', async (e) => {
 
     const title = videoTitleInput.value;
     const description = videoDescriptionInput.value;
+    const category = videoCategoryInput.value; // NEW
+    const topic = videoTopicInput.value.trim(); // NEW
     const videoUrl = videoUrlInput.value.trim();
-    const thumbnailFile = thumbnailFileInput.files[0];
+    const thumbnailUrlValue = thumbnailUrlInput.value.trim(); // Changed from thumbnailFile
 
-    if (!videoUrl || !title) {
-        showUploadStatus("Please provide a video URL and a title.", 'error');
+    // NEW: Updated validation
+    if (!videoUrl || !title || !category || !topic) {
+        showUploadStatus("Please fill out all required fields: Title, Category, Topic, and Video URL.", 'error');
         return;
     }
 
@@ -313,38 +135,21 @@ videoUploadForm.addEventListener('submit', async (e) => {
     try {
         let thumbnailUrl = 'https://via.placeholder.com/400x225.png?text=Video'; // Default placeholder
 
-        // 1. Upload Thumbnail (if provided)
-        if (thumbnailFile) {
-            if (thumbnailFile.size > 1000000) { // Check if file is larger than ~1MB
-                showUploadStatus("Thumbnail is too large (max 1MB).", 'error');
-                uploadBtn.disabled = false;
-                return;
-            }
-            showUploadStatus("Processing thumbnail...", 'info');
-            // Convert the image file to a Base64 string
-            thumbnailUrl = await toBase64(thumbnailFile);
+        // 1. Use provided thumbnail URL or keep the default
+        if (thumbnailUrlValue) {
+            thumbnailUrl = thumbnailUrlValue;
         }
 
         // 2. Save Video Metadata to Firestore
         const videoDocRef = await videosCollection.add({
             title: title,
             description: description,
+            category: category, // NEW
+            topic: topic, // NEW
             videoUrl: videoUrl, // Save the provided URL directly
             thumbnailUrl: thumbnailUrl,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
-
-        // 3. NEW: If a folder is selected, update the folder document
-        const selectedFolderId = folderDropdown.value;
-        if (selectedFolderId) {
-            const folderRef = foldersCollection.doc(selectedFolderId);
-            await folderRef.update({
-                videos: firebase.firestore.FieldValue.arrayUnion(videoDocRef.id)
-            });
-            showUploadStatus("Video added to folder successfully!", 'success');
-        } else {
-            showUploadStatus("Video added successfully!", 'success');
-        }
 
         showUploadStatus("Video added successfully!", 'success');
         videoUploadForm.reset();
@@ -415,18 +220,6 @@ async function saveVideoChanges() {
         showUploadStatus(`Failed to update details: ${error.message}`, 'error');
     }
 }
-
-/**
- * NEW: Converts a file to a Base64 string.
- * @param {File} file - The file to convert.
- * @returns {Promise<string>} A promise that resolves with the Base64 string.
- */
-const toBase64 = file => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-});
 
 // --- Video List Logic (for Admin to view/manage) ---
 
