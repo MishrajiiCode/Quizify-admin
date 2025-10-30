@@ -40,6 +40,7 @@ const QuizAdmin = {
     questionModalTitle: document.getElementById('question-modal-title'),
     questionForm: document.getElementById('question-form'),
     questionIdInput: document.getElementById('question-id'),
+    questionImageURLInput: document.getElementById('question-image-url-input'),
     questionSetIndexInput: document.getElementById('question-set-index-input'),
     questionTextInput: document.getElementById('question-text-input'),
     optionInputs: [
@@ -239,6 +240,10 @@ const QuizAdmin = {
             questionDiv.className = 'question-item';
             questionDiv.innerHTML = `
                 <div class="question-header">
+                    ${question.imageUrl ? 
+                        `<img src="${question.imageUrl}" alt="Question Image" class="question-thumbnail">` 
+                        : ''
+                    }
                     <span class="question-number">Q${index + 1}.</span>
                     <span class="question-text">${question.question || ''}</span>
                 </div>
@@ -274,6 +279,7 @@ const QuizAdmin = {
             const question = chapter.sets[setIndex].questions[questionIndex];
             
             this.questionTextInput.value = question.question;
+            this.questionImageURLInput.value = question.imageUrl || '';
             this.optionInputs.forEach((input, i) => input.value = question.options[i] || '');
             this.correctAnswerSelect.value = question.answer;
         } else { // Adding new question
@@ -298,6 +304,7 @@ const QuizAdmin = {
         const questionData = {
             question: this.questionTextInput.value.trim(),
             options: this.optionInputs.map(input => input.value.trim()),
+            imageUrl: this.questionImageURLInput.value.trim(),
             answer: parseInt(this.correctAnswerSelect.value, 10),
             hint: "", year: "" // Ensure these fields exist
         };
@@ -557,3 +564,4 @@ async function uploadAllDataToFirestore() {
     console.log("Data upload complete!");
     alert("All quiz data has been uploaded to Firestore!");
 }
+
