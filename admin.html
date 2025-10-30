@@ -15,51 +15,11 @@
     <div class="admin-container">
         <h1>Quizify Admin Panel</h1>
 
-        <div class="admin-nav">
-            <a href="index.html">Dashboard</a> |
-            <strong>Video Admin</strong> |
-            <a href="quiz-admin.html">Quiz Admin</a>
-        </div>
-
         <div id="auth-section" class="auth-section">
             <h2>Admin Login</h2>
             <input type="password" id="admin-password" placeholder="Enter Admin Password">
             <button id="login-btn">Login</button>
             <p id="auth-error" class="error-message"></p>
-        </div>
-
-        <!-- Filters Section -->
-        <div id="filters-section" class="filters-section" style="display: none;">
-            <div class="form-group">
-                <label for="video-category-dropdown">Category:</label>
-                <select id="video-category-dropdown">
-                    <option value="">Select Category</option>
-                    <option value="english">English</option>
-                    <option value="reasoning">Reasoning</option>
-                    <option value="quantitative">Quantitative</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="video-topic-dropdown">Topic:</label>
-                <select id="video-topic-dropdown">
-                    <option value="">Select Topic</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="video-folder-dropdown">Folder:</label>
-                <select id="video-folder-dropdown">
-                    <option value="">All Videos</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Folder Management Section -->
-        <div id="folder-section" class="folder-section" style="display: none;">
-            <h2>Video Folders</h2>
-            <button id="create-folder-btn">Create New Folder</button>
-            <div id="folders-list" class="folders-list">
-                <!-- Folder cards will be loaded here -->
-            </div>
         </div>
 
         <div id="upload-section" class="upload-section" style="display: none;">
@@ -78,12 +38,29 @@
                     <textarea id="video-description" rows="4"></textarea>
                 </div>
                 <div class="form-group">
+                    <label for="video-category">Category:</label>
+                    <select id="video-category" required>
+                        <option value="">-- Select a Category --</option>
+                        <option value="competitive">Competitive</option>
+                        <option value="class_9">Class 9</option>
+                        <option value="class_10">Class 10</option>
+                        <option value="class_11">Class 11</option>
+                        <option value="class_12">Class 12</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="video-topic">Topic:</label>
+                    <input type="text" id="video-topic" placeholder="e.g., English, Quantitative, Physics" required>
+                    <p class="setting-description" style="font-size: 12px; margin-top: 4px;">This will be the title of the video row, e.g., "English Grammar".</p>
+                </div>
+
+                <div class="form-group">
                     <label for="video-url">Video URL:</label>
                     <input type="url" id="video-url" placeholder="e.g., https://example.com/video.mp4 or YouTube URL" required>
                 </div>
                 <div class="form-group">
-                    <label for="thumbnail-file">Thumbnail Image (Optional):</label>
-                    <input type="file" id="thumbnail-file" accept="image/*">
+                    <label for="thumbnail-url">Thumbnail URL (Optional):</label>
+                    <input type="url" id="thumbnail-url" placeholder="e.g., https://example.com/image.jpg">
                 </div>
 
                 <button type="submit" id="upload-btn">Upload Video</button>
@@ -103,23 +80,6 @@
             <div id="video-list">
                 <!-- Videos will be loaded here -->
             </div>
-        </div>
-    </div>
-
-    <!-- Folder Creation Modal -->
-    <div id="folder-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Create New Folder</h2>
-                <button class="modal-close-btn" title="Close">&times;</button>
-            </div>
-            <form id="folder-form">
-                <div class="form-group">
-                    <label for="folder-name">Folder Name:</label>
-                    <input type="text" id="folder-name" required>
-                </div>
-                <button type="submit">Create Folder</button>
-            </form>
         </div>
     </div>
 
