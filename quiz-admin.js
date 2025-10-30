@@ -57,6 +57,11 @@ const QuizAdmin = {
     addSetBtn: document.getElementById('add-set-btn'),
     deleteSetBtn: document.getElementById('delete-set-btn'),
     setActions: document.getElementById('set-actions'),
+    samplePaperSection: document.getElementById('sample-paper-section'),
+    samplePaperStreamSelect: document.getElementById('sample-paper-stream-select'),
+    samplePaperUrlInput: document.getElementById('sample-paper-url-input'),
+    saveSamplePaperBtn: document.getElementById('save-sample-paper-btn'),
+    deleteSamplePaperBtn: document.getElementById('delete-sample-paper-btn'),
 
     ADMIN_PASSWORD: "rajmishra", // Change this password
 
@@ -81,6 +86,9 @@ const QuizAdmin = {
         this.subjectSelect.addEventListener('change', () => this.handleSubjectChange());
         this.chapterSelect.addEventListener('change', () => this.handleChapterChange());
         this.setSelect.addEventListener('change', () => this.loadQuestions());
+    this.saveSamplePaperBtn && this.saveSamplePaperBtn.addEventListener('click', () => this.handleSaveSamplePaper());
+    this.samplePaperStreamSelect && this.samplePaperStreamSelect.addEventListener('change', () => this.handleSamplePaperStreamChange());
+    this.deleteSamplePaperBtn && this.deleteSamplePaperBtn.addEventListener('click', () => this.handleDeleteSamplePaper());
         this.addQuestionBtn.addEventListener('click', () => this.openQuestionModal());
         this.addSetBtn.addEventListener('click', async () => await this.addSet());
         this.deleteSetBtn.addEventListener('click', async () => await this.deleteSet());
@@ -172,9 +180,30 @@ const QuizAdmin = {
 
         if (!this.currentSubjectId) {
             this.chapterSelect.innerHTML = '';
+            // hide sample paper controls
+            if (this.samplePaperSection) this.samplePaperSection.style.display = 'none';
             return;
         }
         const selectedSubject = this.allSubjects.find(s => s.id === this.currentSubjectId);
+        // Show sample paper controls for academic subjects
+        if (selectedSubject && selectedSubject.category === 'academic') {
+            if (this.samplePaperSection) this.samplePaperSection.style.display = 'block';
+            // populate stream select
+            const streams = selectedSubject.streams || [];
+            this.samplePaperStreamSelect.innerHTML = '';
+            const defaultOpt = document.createElement('option'); defaultOpt.value = 'default'; defaultOpt.textContent = '-- Default / General --';
+            this.samplePaperStreamSelect.appendChild(defaultOpt);
+            streams.forEach(s => {
+                const opt = document.createElement('option'); opt.value = s; opt.textContent = s.toUpperCase();
+                this.samplePaperStreamSelect.appendChild(opt);
+            });
+            // populate url input from existing data (select default)
+            const sp = selectedSubject.samplePapers || {};
+            const selectedStreamKey = this.samplePaperStreamSelect.value || 'default';
+            this.samplePaperUrlInput.value = sp[selectedStreamKey] || '';
+        } else {
+            if (this.samplePaperSection) this.samplePaperSection.style.display = 'none';
+        }
         this.chapterSelect.innerHTML = '<option value="">-- Select a Chapter --</option>';
         selectedSubject.chapters.forEach((chapter, index) => {
             const option = document.createElement('option');
@@ -228,6 +257,57 @@ const QuizAdmin = {
         } catch (error) {
             console.error('Error loading questions:', error);
             this.showStatus('Failed to load questions', 'error');
+        }
+    },
+
+    async handleSaveSamplePaper() {
+        if (!this.currentSubjectId) return this.showStatus('Select a subject first', 'error');
+        const url = (this.samplePaperUrlInput.value || '').trim();
+        const streamKey = (this.samplePaperStreamSelect.value || 'default');
+        try {
+            this.showStatus('Saving sample paper...', 'info');
+            const subject = this.allSubjects.find(s => s.id === this.currentSubjectId);
+            subject.samplePapers = subject.samplePapers || {};
+            if (url) subject.samplePapers[streamKey] = url;
+            else delete subject.samplePapers[streamKey];
+            await quizzesCollection.doc(this.currentSubjectId).update({ samplePapers: subject.samplePapers });
+            this.showStatus('Sample paper saved successfully', 'success');
+            await this.refreshSubjectData();
+        } catch (error) {
+            console.error('Error saving sample paper:', error);
+            this.showStatus('Failed to save sample paper', 'error');
+        }
+    },
+
+    handleSamplePaperStreamChange() {
+        if (!this.currentSubjectId) return;
+        const selectedSubject = this.allSubjects.find(s => s.id === this.currentSubjectId);
+        const sp = selectedSubject.samplePapers || {};
+        const key = this.samplePaperStreamSelect.value || 'default';
+        this.samplePaperUrlInput.value = sp[key] || '';
+    },
+
+    async handleDeleteSamplePaper() {
+        if (!this.currentSubjectId) return this.showStatus('Select a subject first', 'error');
+        const streamKey = (this.samplePaperStreamSelect.value || 'default');
+        if (!confirm(`Delete sample paper for ${streamKey === 'default' ? 'default' : streamKey.toUpperCase()}? This cannot be undone.`)) return;
+        try {
+            this.showStatus('Deleting sample paper...', 'info');
+            const subject = this.allSubjects.find(s => s.id === this.currentSubjectId);
+            subject.samplePapers = subject.samplePapers || {};
+            if (subject.samplePapers[streamKey]) delete subject.samplePapers[streamKey];
+            // If no keys left, set to empty object to avoid leaving undefined
+            if (Object.keys(subject.samplePapers).length === 0) {
+                await quizzesCollection.doc(this.currentSubjectId).update({ samplePapers: {} });
+            } else {
+                await quizzesCollection.doc(this.currentSubjectId).update({ samplePapers: subject.samplePapers });
+            }
+            this.samplePaperUrlInput.value = '';
+            this.showStatus('Sample paper deleted', 'success');
+            await this.refreshSubjectData();
+        } catch (error) {
+            console.error('Error deleting sample paper:', error);
+            this.showStatus('Failed to delete sample paper', 'error');
         }
     },
 
@@ -546,6 +626,9 @@ async function uploadAllDataToFirestore() {
                         }))
                     };
 
+                    // Include any sample papers defined in the local classes data
+                    docData.samplePapers = classInfo.samplePapers || {};
+
                     if (classInfo.streams) {
                         docData.streams = Object.keys(classInfo.streams).filter(stream => classInfo.streams[stream].includes(subjectKey));
                     } else {
@@ -564,4 +647,3 @@ async function uploadAllDataToFirestore() {
     console.log("Data upload complete!");
     alert("All quiz data has been uploaded to Firestore!");
 }
-
